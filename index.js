@@ -98,7 +98,6 @@ type Author {
 		born: Int
 		bookCount: Int 
 		books: [Book!]
-
 }
   type Query {
     bookCount: Int!
@@ -138,10 +137,14 @@ const resolvers = {
 			return filteredBooks
 		},
 		allAuthors: () => {
-			return authors.map(author => ({
-				...author,
-				bookCount: books.filter(book => book.author === author.name).length,
-			}))
+			return authors.map(author => {
+				const authorBooks = books.filter((book) => book.author === author.name)
+				return {
+					...author,
+					bookCount: books.filter(book => book.author === author.name).length,
+					books: authorBooks, // Populate the books field with book objects
+				}
+			})
 		},
 		findAuthor: (root, args) => {
 			let author = authors.find(a => a.name === args.name)
