@@ -6,6 +6,7 @@ mongoose.set('strictQuery', false)
 require('dotenv').config()
 const Book = require('./models/book')
 const Author = require('./models/author')
+const book = require('./models/book')
 
 
 const MONGODB_URI = process.env.MONGODB_URI
@@ -176,17 +177,6 @@ const resolvers = {
 			})
 
 			return Promise.all(authorPromises)
-
-
-
-			return authors.map(author => {
-				const authorBooks = books.filter((book) => book.author === author.name)
-				return {
-					...author,
-					bookCount: books.filter(book => book.author === author.name).length,
-					books: authorBooks, // Populate the books field with book objects
-				}
-			})
 		},/* 
 		findAuthor: (root, args) => {
 			let author = authors.find(a => a.name === args.name)
@@ -211,22 +201,19 @@ const resolvers = {
 		}*/
 
 	},
-	/* Mutation: {
-		addBook: (root, args) => {
-			let author = authors.find(author => author.name === args.author)
+	Mutation: {
+		addBook: async (root, args) => {
+			let author = await Author.findOne({ name: args.author })
 			if (!author) {
-				author = {
-					name: args.author,
-					born: null, // Set default birth year as null
-					id: uuid(),
-				}
-				authors.push(author)
+				author = new Author({ name: args.author })
 			}
-			const book = { ...args, id: uuid() }
-			books = books.concat(book)
+			const book = new Book({ ...args, author: author._id })
+			await book.save()
 			return book
+
+
 		},
-		editAuthor: (root, args) => {
+		/*editAuthor: (root, args) => {
 			const author = authors.find(a => a.name === args.name)
 			if (!author) {
 				return null
@@ -235,8 +222,8 @@ const resolvers = {
 			const updatedAuthor = { ...author, born: args.setBornTo }
 			authors = authors.map(a => a.name === args.name ? updatedAuthor : a)
 			return updatedAuthor
-		}
-	} */
+		}*/
+	}
 }
 
 const server = new ApolloServer({
