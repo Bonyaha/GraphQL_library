@@ -1,6 +1,25 @@
 const { ApolloServer } = require('@apollo/server')
 const { startStandaloneServer } = require('@apollo/server/standalone')
 const { v1: uuid } = require('uuid')
+const mongoose = require('mongoose')
+mongoose.set('strictQuery', false)
+require('dotenv').config()
+const Book = require('./models/book')
+const Author = require('./models/author')
+
+
+const MONGODB_URI = process.env.MONGODB_URI
+
+console.log('connecting to', MONGODB_URI)
+
+mongoose.connect(MONGODB_URI)
+	.then(() => {
+		console.log('connected to MongoDB')
+	})
+	.catch((error) => {
+		console.log('error connection to MongoDB:', error.message)
+	})
+
 
 let authors = [
 	{
@@ -88,7 +107,7 @@ enum YesNo {  YES  NO}
 	type Book {
 		title: String!
 		published:Int!
-		author: String!
+		author: Author!
 		id: ID!
 		genres:[String!]!  
 }
@@ -124,19 +143,42 @@ editAuthor(
 
 const resolvers = {
 	Query: {
-		bookCount: () => books.length,
-		authorCount: () => authors.length,
-		allBooks: (root, args) => {
-			let filteredBooks = books
+		bookCount: async () => await Book.collection.countDocuments(),
+		authorCount: async () => await Author.collection.countDocuments(),
+		allBooks: async (root, args) => {
+			const query = {}
 			if (args.author) {
-				filteredBooks = filteredBooks.filter((book) => book.author === args.author)
+				const author = await Author.findOne({ name: args.author })
+				if (author) {
+					query.author = author._id
+				} else {
+					// If the author doesn't exist, return an empty array
+					return []
+				}
 			}
 			if (args.genre) {
-				filteredBooks = filteredBooks.filter((book) => book.genres.includes(args.genre))
+				query.genres = args.genre
 			}
-			return filteredBooks
+			return await Book.find(query).populate('author')
 		},
-		allAuthors: () => {
+		allAuthors: async () => {
+			const authors = await Author.find({})
+			// Calculate bookCount and populate the books field for each author
+			const authorPromises = authors.map(async (author) => {
+				const authorBooks = await Book.find({ author: author._id })
+				const bookCount = authorBooks.length
+
+				return {
+					...author, // No need for toObject() here
+					bookCount,
+					books: authorBooks,
+				}
+			})
+
+			return Promise.all(authorPromises)
+
+
+
 			return authors.map(author => {
 				const authorBooks = books.filter((book) => book.author === author.name)
 				return {
@@ -145,7 +187,7 @@ const resolvers = {
 					books: authorBooks, // Populate the books field with book objects
 				}
 			})
-		},
+		},/* 
 		findAuthor: (root, args) => {
 			let author = authors.find(a => a.name === args.name)
 
@@ -165,11 +207,11 @@ const resolvers = {
 			if (!title) {
 				return null
 			}
-			return title
-		}
+			return title 
+		}*/
 
 	},
-	Mutation: {
+	/* Mutation: {
 		addBook: (root, args) => {
 			let author = authors.find(author => author.name === args.author)
 			if (!author) {
@@ -194,7 +236,7 @@ const resolvers = {
 			authors = authors.map(a => a.name === args.name ? updatedAuthor : a)
 			return updatedAuthor
 		}
-	}
+	} */
 }
 
 const server = new ApolloServer({
