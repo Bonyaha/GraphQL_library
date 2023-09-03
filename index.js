@@ -1,6 +1,5 @@
 const { ApolloServer } = require('@apollo/server')
 const { startStandaloneServer } = require('@apollo/server/standalone')
-const { v1: uuid } = require('uuid')
 const mongoose = require('mongoose')
 mongoose.set('strictQuery', false)
 require('dotenv').config()
@@ -164,48 +163,62 @@ const resolvers = {
 		},
 		allAuthors: async () => {
 			const authors = await Author.find({})
-			// Calculate bookCount and populate the books field for each author
 			const authorPromises = authors.map(async (author) => {
 				const authorBooks = await Book.find({ author: author._id })
 				const bookCount = authorBooks.length
 
 				return {
-					...author, // No need for toObject() here
+					...author.toObject(), // toObject() is for converting Moongoose specific document represantation into plain JS objects, without it we would have not an author info at all
 					bookCount,
 					books: authorBooks,
 				}
 			})
-
 			return Promise.all(authorPromises)
-		},/* 
-		findAuthor: (root, args) => {
-			let author = authors.find(a => a.name === args.name)
-
+		},
+		findAuthor: async (root, args) => {
+			let author = await Author.findOne({ name: args.name })
 			if (!author) {
 				return null
 			}
-			const authorBooks = books.filter(book => book.author === author.name)
+			const authorBooks = await Book.find({ author: author._id })
+			const bookCount = authorBooks.length
 			return {
-				...author,
-				bookCount: authorBooks.length,
-				books: authorBooks
+				...author.toObject(),
+				bookCount,
+				books: authorBooks,
 			}
 		},
-		findBook: (root, args) => {
-			let title = books.find(a => a.title === args.title)
-
-			if (!title) {
+		findBook: async (root, args) => {
+			const book = await Book.findOne({ title: args.title }).populate('author')
+			if (!book) {
 				return null
 			}
-			return title 
-		}*/
 
+			const author = await Author.findById(book.author)//book.author here is ObjectId, not an object
+
+			const authorBooks = await Book.find({ author: author._id })
+			const bookCount = authorBooks.length
+
+			console.log(book)
+			return {
+				...book.toObject(),
+				author: {
+					...author.toObject(),
+					bookCount,
+					books: authorBooks,
+
+				}
+
+				//despite that findOne returns plain JavaScript object, when we return object and spreading a book, we need to use toObject() 
+			}
+		}
 	},
 	Mutation: {
 		addBook: async (root, args) => {
 			let author = await Author.findOne({ name: args.author })
 			if (!author) {
 				author = new Author({ name: args.author })
+				await author.save()
 			}
 			const book = new Book({ ...args, author: author._id })
 			await book.save()
@@ -213,16 +226,23 @@ const resolvers = {
 
 
 		},
-		/*editAuthor: (root, args) => {
-			const author = authors.find(a => a.name === args.name)
+		editAuthor: async (root, args) => {
+			const author = await Author.findOne({ name: args.name })
+
 			if (!author) {
 				return null
 			}
 
-			const updatedAuthor = { ...author, born: args.setBornTo }
-			authors = authors.map(a => a.name === args.name ? updatedAuthor : a)
-			return updatedAuthor
-		}*/
+			author.born = args.setBornTo
+			await author.save()
+			const authorBooks = await Book.find({ author: author._id })
+			const bookCount = authorBooks.length
+			return {
+				...author.toObject(),
+				bookCount,
+				books: authorBooks,
+			}
+		}
 	}
 }
 
