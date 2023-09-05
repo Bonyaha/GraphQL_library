@@ -183,7 +183,8 @@ const resolvers = {
 				query.genres = { $in: [args.genre] }  // Use $in to match books with the specified genre
 			}
 			console.log(query)
-			const books = await Book.find(query).populate('author')
+			const books = await Book.find(query)
+			console.log(books)
 			// Map over the books and fetch the additional author info
 			const booksWithAuthorInfo = books.map(async (book) => {
 				const author = await Author.findById(book.author)
@@ -306,7 +307,6 @@ const resolvers = {
 					}
 				})
 			}
-
 			return book.populate('author')
 		},
 
