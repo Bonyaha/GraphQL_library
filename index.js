@@ -49,7 +49,6 @@ let authors = [
 	},
 ]
 
-
 let books = [
 	{
 		title: 'Clean Code',
@@ -168,6 +167,8 @@ const resolvers = {
 		authorCount: async () => await Author.collection.countDocuments(),
 
 		allBooks: async (root, args) => {
+			let obj = await Book.find({})
+			//console.log(obj)
 			const query = {}
 
 			if (args.author) {
@@ -184,24 +185,24 @@ const resolvers = {
 			}
 			console.log(query)
 			const books = await Book.find(query)
-			console.log(books)
+			//console.log(books)
 			// Map over the books and fetch the additional author info
 			const booksWithAuthorInfo = books.map(async (book) => {
-				const author = await Author.findById(book.author)
+				let author = await Author.findById(book.author)
+
 				const authorBooks = await Book.find({ author: author._id })
 				const bookCount = authorBooks.length
+				console.log(authorBooks)
+
 				return {
-					...book.toObject(),
+					...book.toJSON(),//by calling toJSON() before returning it in your resolver, you ensure that the transformation defined in the schema's toJSON method is applied, and the _id field is correctly transformed to id in the JSON response.
 					author: {
-						...author.toObject(),
+						...author.toJSON(),
 						bookCount,
 						books: authorBooks,
 					}
-
 				}
 			})
-			//console.log(book)
-
 			return Promise.all(booksWithAuthorInfo)
 		},
 
@@ -213,7 +214,7 @@ const resolvers = {
 				const authorBooks = await Book.find({ author: author._id })
 				const bookCount = authorBooks.length
 				return {
-					...author.toObject(), // toObject() is for converting Moongoose specific document represantation into plain JS objects, without it we would have not an author info at all
+					...author.toJSON(),
 					bookCount,
 					books: authorBooks,
 				}
@@ -230,7 +231,7 @@ const resolvers = {
 			const authorBooks = await Book.find({ author: author._id })
 			const bookCount = authorBooks.length
 			return {
-				...author.toObject(),
+				...author.toJSON(),
 				bookCount,
 				books: authorBooks,
 			}
@@ -250,13 +251,13 @@ const resolvers = {
 			const bookCount = authorBooks.length
 
 			return {
-				...book.toObject(),
+				...book.toJSON(),
 				author: {
-					...author.toObject(),
+					...author.toJSON(),
 					bookCount,
 					books: authorBooks,
 				}
-				//despite that findOne returns plain JavaScript object, when we return object and spreading a book, we need to use toObject() 
+
 			}
 		},
 
@@ -328,7 +329,7 @@ const resolvers = {
 			const authorBooks = await Book.find({ author: author._id })
 			const bookCount = authorBooks.length
 			return {
-				...author.toObject(),
+				...author.toJSON(),
 				bookCount,
 				books: authorBooks,
 			}
