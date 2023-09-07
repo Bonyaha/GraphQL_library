@@ -269,11 +269,11 @@ const resolvers = {
 	Mutation: {
 		addBook: async (root, args, context) => {
 			if (args.title.length < 5) {
-				throw new GraphQLError('Book title must be at least 3 characters long')
+				throw new GraphQLError('Book title must be at least 5 characters long')
 			}
 
 			if (args.author.length < 4) {
-				throw new GraphQLError('Author name must be at least 3 characters long')
+				throw new GraphQLError('Author name must be at least 4 characters long')
 			}
 			let author = await Author.findOne({ name: args.author })
 			if (!author) {
