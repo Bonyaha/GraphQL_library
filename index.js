@@ -105,6 +105,7 @@ let books = [
 
 const typeDefs = `
 enum YesNo {  YES  NO}
+
   type User {
     username: String!
     favoriteGenre: String!
