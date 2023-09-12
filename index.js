@@ -137,6 +137,8 @@ type Author {
 		allAuthors: [Author!]!
 		findAuthor(name: String!): Author
 		findBook(title: String!): Book
+		booksByGenre(genre: String!): [Book]
+  	booksByAuthor(author: String!): [Book]
     me: User
   }
 	
@@ -264,7 +266,15 @@ const resolvers = {
 
 		me: (root, args, context) => {
 			return context.currentUser
-		}
+		},
+		booksByGenre: async (_, { genre }) => {
+			const books = await Book.find({ genres: genre })
+			return books
+		},
+		booksByAuthor: async (_, { author }) => {
+			const books = await Book.find({ author: author })
+			return books
+		},
 	},
 
 	Mutation: {
