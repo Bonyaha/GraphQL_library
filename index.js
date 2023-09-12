@@ -269,11 +269,44 @@ const resolvers = {
 		},
 		booksByGenre: async (_, { genre }) => {
 			const books = await Book.find({ genres: genre })
-			return books
+			const booksWithAuthorInfo = books.map(async (book) => {
+				let author = await Author.findById(book.author)
+
+				const authorBooks = await Book.find({ author: author._id })
+				const bookCount = authorBooks.length
+				console.log(authorBooks)
+
+				return {
+					...book.toJSON(),
+					author: {
+						...author.toJSON(),
+						bookCount,
+						books: authorBooks,
+					}
+				}
+			})
+			return Promise.all(booksWithAuthorInfo)
+
 		},
 		booksByAuthor: async (_, { author }) => {
 			const books = await Book.find({ author: author })
-			return books
+			const booksWithAuthorInfo = books.map(async (book) => {
+				let author = await Author.findById(book.author)
+
+				const authorBooks = await Book.find({ author: author._id })
+				const bookCount = authorBooks.length
+				console.log(authorBooks)
+
+				return {
+					...book.toJSON(),
+					author: {
+						...author.toJSON(),
+						bookCount,
+						books: authorBooks,
+					}
+				}
+			})
+			return Promise.all(booksWithAuthorInfo)
 		},
 	},
 
