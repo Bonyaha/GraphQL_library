@@ -7,8 +7,9 @@ const cors = require('cors')
 const http = require('http')
 const { WebSocketServer } = require('ws')
 const { useServer } = require('graphql-ws/lib/use/ws')
-
+const jwt = require('jsonwebtoken')
 const mongoose = require('mongoose')
+const User = require('./models/user')
 mongoose.set('strictQuery', false)
 require('dotenv').config()
 
