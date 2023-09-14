@@ -33,7 +33,7 @@ type Author {
 		findAuthor(name: String!): Author
 		findBook(title: String!): Book
 		booksByGenre(genre: String!): [Book]
-  	booksByAuthor(author: String!): [Book]
+		booksByAuthor(author: String!): [Book]
     me: User
   }
 	
@@ -57,6 +57,9 @@ createUser(
     password: String!
   ): Token
 }
+	type Subscription {
+		bookAdded: Book!
+}	
 `
 
 module.exports = typeDefs
