@@ -12,6 +12,10 @@ const authorSchema = new mongoose.Schema({
 	born: {
 		type: Number,
 	},
+	books: [{
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Book'
+	}],
 })
 authorSchema.set('toJSON', {
 	transform: (document, returnedObject) => {

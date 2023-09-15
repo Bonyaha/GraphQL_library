@@ -12,8 +12,6 @@ const resolvers = {
 		authorCount: async () => await Author.collection.countDocuments(),
 
 		allBooks: async (root, args) => {
-			let obj = await Book.find({})
-			//console.log(obj)
 			const query = {}
 
 			if (args.author) {
@@ -21,17 +19,16 @@ const resolvers = {
 				if (author) {
 					query.author = author._id
 				} else {
-					// If the author doesn't exist, return an empty array
 					return []
 				}
 			}
 			if (args.genre) {
-				query.genres = { $in: [args.genre] }  // Use $in to match books with the specified genre
+				query.genres = { $in: [args.genre] }
 			}
 			console.log(query)
 			const books = await Book.find(query)
 			//console.log(books)
-			// Map over the books and fetch the additional author info
+
 			const booksWithAuthorInfo = books.map(async (book) => {
 				let author = await Author.findById(book.author)
 
@@ -52,11 +49,11 @@ const resolvers = {
 		},
 
 		allAuthors: async () => {
-			const authors = await Author.find({})
-
+			const authors = await Author.find({}).populate('books')
+			console.log('Author.find')
 			const authorPromises = authors.map(async (author) => {
-
 				const authorBooks = await Book.find({ author: author._id })
+				console.log('Book.find')
 				const bookCount = authorBooks.length
 				return {
 					...author.toJSON(),
@@ -64,8 +61,10 @@ const resolvers = {
 					books: authorBooks,
 				}
 			})
-			console.log(authorPromises)
-			return Promise.all(authorPromises)
+
+			//return Promise.all(authorPromises)
+			console.log(authors)
+			return authors
 		},
 
 		findAuthor: async (root, args) => {
@@ -194,6 +193,9 @@ const resolvers = {
 					}
 				})
 			}
+			// Push the book's _id to the author's books array
+			author.books = author.books.concat(book._id)
+			await author.save()
 			await book.populate('author')
 			pubsub.publish('BOOK_ADDED', { bookAdded: book })
 			return book
