@@ -4,6 +4,7 @@ const Book = require('./models/book')
 const Author = require('./models/author')
 const User = require('./models/user')
 const { PubSub } = require('graphql-subscriptions')
+const author = require('./models/author')
 const pubsub = new PubSub()
 
 const resolvers = {
@@ -51,7 +52,7 @@ const resolvers = {
 		allAuthors: async () => {
 			const authors = await Author.find({}).populate('books')
 			console.log('Author.find')
-			const authorPromises = authors.map(async (author) => {
+			/* const authorPromises = authors.map(async (author) => {
 				const authorBooks = await Book.find({ author: author._id })
 				console.log('Book.find')
 				const bookCount = authorBooks.length
@@ -60,11 +61,19 @@ const resolvers = {
 					bookCount,
 					books: authorBooks,
 				}
-			})
+			}) */
 
 			//return Promise.all(authorPromises)
-			console.log(authors)
-			return authors
+			const authorFullInfo = authors.map(author => {
+				const bookCount = author.books ? author.books.length : 0
+				console.log(bookCount)
+				return {
+					...author.toJSON(),
+					bookCount
+				}
+			})
+
+			return authorFullInfo
 		},
 
 		findAuthor: async (root, args) => {
