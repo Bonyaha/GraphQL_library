@@ -352,7 +352,9 @@ const resolvers = {
 					}
 				})
 			}
-			return book.populate('author')
+			await book.populate('author')
+			console.log(book)
+			return book
 		},
 
 		editAuthor: async (root, args, context) => {
