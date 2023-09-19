@@ -94,47 +94,6 @@ const resolvers = {
 		me: (root, args, context) => {
 			return context.currentUser
 		},
-		booksByGenre: async (_, { genre }) => {
-			const books = await Book.find({ genres: genre })
-			const booksWithAuthorInfo = books.map(async (book) => {
-				let author = await Author.findById(book.author)
-
-				const authorBooks = await Book.find({ author: author._id })
-				const bookCount = authorBooks.length
-				console.log(authorBooks)
-
-				return {
-					...book.toJSON(),
-					author: {
-						...author.toJSON(),
-						bookCount,
-						books: authorBooks,
-					}
-				}
-			})
-			return Promise.all(booksWithAuthorInfo)
-
-		},
-		booksByAuthor: async (_, { author }) => {
-			const books = await Book.find({ author: author })
-			const booksWithAuthorInfo = books.map(async (book) => {
-				let author = await Author.findById(book.author)
-
-				const authorBooks = await Book.find({ author: author._id })
-				const bookCount = authorBooks.length
-				console.log(authorBooks)
-
-				return {
-					...book.toJSON(),
-					author: {
-						...author.toJSON(),
-						bookCount,
-						books: authorBooks,
-					}
-				}
-			})
-			return Promise.all(booksWithAuthorInfo)
-		},
 	},
 
 	Mutation: {
@@ -185,9 +144,19 @@ const resolvers = {
 			author.books = author.books.concat(book._id)
 			await author.save()
 			await book.populate('author')
+
+			const authorBooks = await Book.find({ author: book.author._id })
+			const bookCount = authorBooks.length
 			console.log(book)
 			pubsub.publish('BOOK_ADDED', { bookAdded: book })
-			return book
+			return {
+				...book.toJSON(),
+				author: {
+					...book.author.toJSON(),
+					bookCount,
+					books: authorBooks,
+				}
+			}
 		},
 
 		editAuthor: async (root, args, context) => {
