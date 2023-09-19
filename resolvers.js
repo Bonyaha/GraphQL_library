@@ -32,34 +32,14 @@ const resolvers = {
 			const booksWithAuthorInfo = books.map(book => {
 				const bookCount = book.author.books ? book.author.books.length : 0
 				return {
-					...book.toJSON(),
+					...book.toJSON(),//by calling toJSON() before returning it in your resolver, you ensure that the transformation defined in the schema's toJSON method is applied, and the _id field is correctly transformed to id in the JSON response.It's nesessary to do when you use spread operator.
 					author: {
 						...book.author.toJSON(),
 						bookCount,
 					}
 				}
-
-
 			})
 			return booksWithAuthorInfo
-			/* const booksWithAuthorInfo = books.map(async (book) => {
-				let author = await Author.findById(book.author)
-
-				const authorBooks = await Book.find({ author: author._id })
-				const bookCount = authorBooks.length
-				console.log(authorBooks)
-
-				return {
-					...book.toJSON(),//by calling toJSON() before returning it in your resolver, you ensure that the transformation defined in the schema's toJSON method is applied, and the _id field is correctly transformed to id in the JSON response.
-					author: {
-						...author.toJSON(),
-						bookCount,
-						books: authorBooks,
-					}
-				}
-			}) */
-			//return Promise.all(booksWithAuthorInfo)
-			//return books
 		},
 
 		allAuthors: async () => {
