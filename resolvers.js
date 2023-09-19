@@ -180,10 +180,11 @@ const resolvers = {
 				})
 			}
 			// Push the book's _id to the author's books array
-			console.log(author.books)
+			//console.log(author.books)
 			author.books = author.books.concat(book._id)
 			await author.save()
 			await book.populate('author')
+			console.log(book)
 			pubsub.publish('BOOK_ADDED', { bookAdded: book })
 			return book
 		},
