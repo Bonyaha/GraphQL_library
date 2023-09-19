@@ -204,6 +204,8 @@ const resolvers = {
 			await author.save()
 			await book.populate('author')
 			pubsub.publish('BOOK_ADDED', { bookAdded: book })
+			pubsub.publish('AUTHOR_ADDED', { authorAdded: author })
+
 			return book
 		},
 
@@ -269,6 +271,7 @@ const resolvers = {
 		},
 	},
 	Subscription: { bookAdded: { subscribe: () => pubsub.asyncIterator('BOOK_ADDED') }, },
+	Subscription: { authorAdded: { subscribe: () => pubsub.asyncIterator('AUTHOR_ADDED') }, },
 }
 
 module.exports = resolvers
