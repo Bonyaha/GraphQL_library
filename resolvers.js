@@ -142,10 +142,17 @@ const resolvers = {
 			if (args.title.length < 5) {
 				throw new GraphQLError('Book title must be at least 5 characters long')
 			}
-
 			if (args.author.length < 4) {
 				throw new GraphQLError('Author name must be at least 4 characters long')
 			}
+
+			const currentUser = context.currentUser
+			if (!currentUser) {
+				throw new GraphQLError('not authenticated', {
+					extensions: { code: 'BAD_USER_INPUT', }
+				})
+			}
+
 			let author = await Author.findOne({ name: args.author })
 			if (!author) {
 				author = new Author({ name: args.author })
@@ -162,12 +169,6 @@ const resolvers = {
 				}
 			}
 			const book = new Book({ ...args, author: author._id })
-			const currentUser = context.currentUser
-			if (!currentUser) {
-				throw new GraphQLError('not authenticated', {
-					extensions: { code: 'BAD_USER_INPUT', }
-				})
-			}
 			try {
 				await book.save()
 			} catch (error) {
