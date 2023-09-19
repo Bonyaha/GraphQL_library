@@ -27,10 +27,22 @@ const resolvers = {
 				query.genres = { $in: [args.genre] }
 			}
 			console.log(query)
-			const books = await Book.find(query)
-			//console.log(books)
+			const books = await Book.find(query).populate('author')
+			console.log(books)
+			const booksWithAuthorInfo = books.map(book => {
+				const bookCount = book.author.books ? book.author.books.length : 0
+				return {
+					...book.toJSON(),
+					author: {
+						...book.author.toJSON(),
+						bookCount,
+					}
+				}
 
-			const booksWithAuthorInfo = books.map(async (book) => {
+
+			})
+			return booksWithAuthorInfo
+			/* const booksWithAuthorInfo = books.map(async (book) => {
 				let author = await Author.findById(book.author)
 
 				const authorBooks = await Book.find({ author: author._id })
@@ -45,25 +57,15 @@ const resolvers = {
 						books: authorBooks,
 					}
 				}
-			})
-			return Promise.all(booksWithAuthorInfo)
+			}) */
+			//return Promise.all(booksWithAuthorInfo)
+			//return books
 		},
 
 		allAuthors: async () => {
 			const authors = await Author.find({}).populate('books')
 			console.log('Author.find')
-			/* const authorPromises = authors.map(async (author) => {
-				const authorBooks = await Book.find({ author: author._id })
-				console.log('Book.find')
-				const bookCount = authorBooks.length
-				return {
-					...author.toJSON(),
-					bookCount,
-					books: authorBooks,
-				}
-			}) */
 
-			//return Promise.all(authorPromises)
 			const authorFullInfo = authors.map(author => {
 				const bookCount = author.books ? author.books.length : 0
 				console.log(bookCount)
@@ -72,45 +74,40 @@ const resolvers = {
 					bookCount
 				}
 			})
-
 			return authorFullInfo
 		},
 
 		findAuthor: async (root, args) => {
-			let author = await Author.findOne({ name: args.name })
+			let author = await Author.findOne({ name: args.name }).populate('books')
 			if (!author) {
 				return null
 			}
-			const authorBooks = await Book.find({ author: author._id })
-			const bookCount = authorBooks.length
+			const bookCount = author.books.length
+
 			return {
 				...author.toJSON(),
 				bookCount,
-				books: authorBooks,
 			}
 		},
 
 		findBook: async (root, args) => {
-			const book = await Book.findOne({ title: args.title })
+			const book = await Book.findOne({ title: args.title }).populate('author')
 			console.log(book)
 			if (!book) {
 				return null
 			}
 			console.log(book.author)
-			const author = await Author.findById(book.author)//book.author here is ObjectId, not an object
-			console.log(author)
 
-			const authorBooks = await Book.find({ author: author._id })
+			const authorBooks = await Book.find({ author: book.author._id })
 			const bookCount = authorBooks.length
 
 			return {
 				...book.toJSON(),
 				author: {
-					...author.toJSON(),
+					...book.author.toJSON(),
 					bookCount,
 					books: authorBooks,
 				}
-
 			}
 		},
 
@@ -251,6 +248,7 @@ const resolvers = {
 					})
 				})
 		},
+
 		login: async (root, args) => {
 			const user = await User.findOne({ username: args.username })
 
