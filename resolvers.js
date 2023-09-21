@@ -171,6 +171,7 @@ const resolvers = {
 				author = new Author({ name: args.author })
 				try {
 					await author.save()
+					pubsub.publish('AUTHOR_ADDED', { authorAdded: author })
 				} catch (error) {
 					throw new GraphQLError('Saving person failed', {
 						extensions: {
@@ -182,6 +183,7 @@ const resolvers = {
 				}
 			}
 			const book = new Book({ ...args, author: author._id })
+			console.log(book)
 			const currentUser = context.currentUser
 			if (!currentUser) {
 				throw new GraphQLError('not authenticated', {
@@ -200,12 +202,12 @@ const resolvers = {
 				})
 			}
 			// Push the book's _id to the author's books array
+			console.log('author')
+			//console.log(author)
 			author.books = author.books.concat(book._id)
 			await author.save()
 			await book.populate('author')
 			pubsub.publish('BOOK_ADDED', { bookAdded: book })
-			pubsub.publish('AUTHOR_ADDED', { authorAdded: author })
-
 			return book
 		},
 
@@ -270,8 +272,14 @@ const resolvers = {
 			return { value: jwt.sign(userForToken, process.env.JWT_SECRET) }
 		},
 	},
-	Subscription: { bookAdded: { subscribe: () => pubsub.asyncIterator('BOOK_ADDED') }, },
-	Subscription: { authorAdded: { subscribe: () => pubsub.asyncIterator('AUTHOR_ADDED') }, },
+	Subscription: {
+		bookAdded: {
+			subscribe: () => pubsub.asyncIterator('BOOK_ADDED'),
+		},
+		authorAdded: {
+			subscribe: () => pubsub.asyncIterator('AUTHOR_ADDED'),
+		},
+	},
 }
 
 module.exports = resolvers
