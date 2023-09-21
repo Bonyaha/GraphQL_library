@@ -59,6 +59,7 @@ createUser(
 }
 	type Subscription {
 		bookAdded: Book!
+		authorAdded: Author!
 }	
 `
 
