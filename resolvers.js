@@ -129,12 +129,7 @@ const resolvers = {
 				}
 			}
 			const book = new Book({ ...args, author: author._id })
-			const currentUser = context.currentUser
-			if (!currentUser) {
-				throw new GraphQLError('not authenticated', {
-					extensions: { code: 'BAD_USER_INPUT', }
-				})
-			}
+
 			try {
 				await book.save()
 			} catch (error) {
